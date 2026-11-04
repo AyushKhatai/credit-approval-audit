@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Approval Prediction & Algorithmic Fairness Audit</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --primary-dark: #0f172a;
+      --secondary: #0d9488;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background-color: var(--bg);
+    }
+
+    /* Top Navigation */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .nav-brand {
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-brand span {
+      color: var(--primary-light);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #60a5fa;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e293b 100%);
+      color: white;
+      padding: 4.5rem 2rem 3.5rem;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(147, 197, 253, 0.3);
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.2;
+      max-width: 950px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .hero p.subtitle {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 800px;
+      margin: 0 auto 2rem;
+    }
+
+    .author-meta {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 1.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .author-meta div strong {
+      color: white;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    /* Highlights / KPI Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-top: -3rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .stat-val {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 0.35rem;
+    }
+
+    /* Section Styling */
+    section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .section-header {
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 1rem;
+    }
+
+    .section-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .section-header h2 {
+      font-size: 1.85rem;
+      color: var(--primary-dark);
+      margin-top: 0.25rem;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .hero h1 {
+        font-size: 2rem;
+      }
+    }
+
+    /* Card Panels */
+    .card {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+
+    .card h3 {
+      font-size: 1.2rem;
+      color: var(--primary-dark);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Images */
+    .chart-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      margin: 1.25rem 0;
+      text-align: center;
+    }
+
+    .chart-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .chart-caption {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.65rem;
+      font-style: italic;
+    }
+
+    /* Tables */
+    .table-responsive {
+      overflow-x: auto;
+      margin: 1.25rem 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--primary-dark);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    tr:hover {
+      background: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+
+    /* Key Insights Box */
+    .insight-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary-light);
+      padding: 1.25rem;
+      border-radius: 0 10px 10px 0;
+      margin: 1.5rem 0;
+    }
+
+    .insight-box h4 {
+      color: var(--primary);
+      margin-bottom: 0.4rem;
+      font-size: 1.05rem;
+    }
+
+    .insight-box p {
+      color: #334155;
+      font-size: 0.95rem;
+    }
+
+    /* Steps Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+      margin: 1.5rem 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 5px;
+      bottom: 5px;
+      width: 2px;
+      background: #cbd5e1;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.75rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      border: 3px solid white;
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .timeline-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary-dark);
+    }
+
+    .timeline-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--primary-dark);
+      color: #94a3b8;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      margin-top: 4rem;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#60a5fa;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+      CreditApproval<span>Audit</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#da1">EDA (DA1)</a></li>
+      <li><a href="#da2-db">Database & Features</a></li>
+      <li><a href="#da2-models">ML Benchmarking</a></li>
+      <li><a href="#da3-fairness">Fairness Audit</a></li>
+      <li><a href="#da3-unawareness">Mitigation</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-badge">VIT University • BMAT202P Probability & Statistics Project</div>
+    <h1>Predicting Credit Card Approval & Auditing Algorithmic Fairness Across Applicant Subgroups</h1>
+    <p class="subtitle">An end-to-end framework integrating relational database engineering, 12 supervised machine learning classifiers, rigorous bootstrap/permutation fairness auditing, and an interactive Shiny decision cockpit.</p>
+    
+    <div class="author-meta">
+      <div>Author: <strong>Ayush Khatai</strong> (24BDS1106)</div>
+      <div>Faculty Guide: <strong>Prof. Jaganathan B</strong></div>
+      <div>Degree: <strong>B.Tech Computer Science & Engineering</strong></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Stat / KPI Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">690</div>
+        <div class="stat-label">Applicants</div>
+        <div class="stat-desc">UCI Credit Approval records</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">12</div>
+        <div class="stat-label">ML Classifiers</div>
+        <div class="stat-desc">Benchmarked with 5-fold 2-repeat CV</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">0.918</div>
+        <div class="stat-label">Top Test AUC</div>
+        <div class="stat-desc">Random Forest (83.9% Accuracy)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">p = 1.0</div>
+        <div class="stat-label">Adjusted Fairness Gap</div>
+        <div class="stat-desc">Disparities within chance variation</div>
+      </div>
+    </div>
+
+    <!-- Section: Executive Summary -->
+    <section id="overview">
+      <div class="section-header">
+        <span class="section-tag">Executive Summary</span>
+        <h2>Problem Statement & Project Objectives</h2>
+        <p>Balancing predictive accuracy and demographic fairness in automated financial decision systems.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <p>Automated credit evaluation improves underwriting velocity and objective consistency, but carries the severe risk of amplifying historical discrimination against vulnerable applicant cohorts. This project tackles both frontiers simultaneously using the benchmark <strong>UCI Credit Approval Dataset</strong>:</p>
+          <ul style="margin: 1rem 0 1rem 1.5rem; color: #334155;">
+            <li><strong>Data & Database Engineering:</strong> Cleans raw records, imputes missing values, and provisions an ACID-compliant SQLite schema with parameterized SQL retrieval.</li>
+            <li><strong>Feature Engineering & Selection:</strong> Constructs non-linear log transformations, debt-to-age interaction ratios, and performs Random Forest permutation feature selection.</li>
+            <li><strong>12-Model Machine Learning Suite:</strong> Benchmarks linear, non-linear, tree-based ensemble, and deep neural network classifiers under identical cross-validation folds.</li>
+            <li><strong>Algorithmic Fairness Audit:</strong> Quantifies Demographic Parity and Equal Opportunity across subgroup proxies, establishing rigorous statistical bounds via 1,000 bootstrap resamples and 2,000 permutation label shuffles.</li>
+            <li><strong>Fairness Through Unawareness:</strong> Tests whether removing demographic attribute <code>A1</code> mitigates bias or leaves disparities intact due to proxy encoding.</li>
+          </ul>
+        </div>
+        <div class="card" style="background:#f1f5f9; border-left: 4px solid var(--primary);">
+          <h3>Pipeline Execution Journey</h3>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-title">DA1: Preprocessing & EDA</div>
+              <div class="timeline-desc">Median/mode imputation & 6 exploratory visualizations.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-title">DA2: Database & Features</div>
+              <div class="timeline-desc">Relational schema, SQL queries & RF permutation selection.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-title">DA2: Model Benchmarking</div>
+              <div class="timeline-desc">12 models evaluated on held-out test data (AUC & F1).</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-title">DA3: Fairness Audit & Mitigation</div>
+              <div class="timeline-desc">Bootstrap CIs, DeLong tests & Shiny interactive cockpit.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: DA1 Exploratory Data Analysis -->
+    <section id="da1">
+      <div class="section-header">
+        <span class="section-tag">Assignment 1 (DA1)</span>
+        <h2>Data Preprocessing & Exploratory Data Analysis</h2>
+        <p>Understanding distributions, missingness patterns, and core predictive signals in raw credit applications.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Dataset Understanding</h3>
+          <p>The UCI Credit Approval dataset comprises 690 applicant records across 15 anonymized attributes (<code>A1</code> through <code>A15</code>) and a binary outcome <code>A16</code> (<code>+</code> approved, <code>-</code> rejected). Because the attributes were masked for privacy, standard banking proxies are applied:</p>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Attribute</th>
+                  <th>Type</th>
+                  <th>Banking Proxy Interpretation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>A1</code></td><td>Categorical (a, b)</td><td>Applicant demographic / gender proxy</td></tr>
+                <tr><td><code>A2</code></td><td>Continuous</td><td>Applicant age proxy</td></tr>
+                <tr><td><code>A3</code></td><td>Continuous</td><td>Debt / existing liabilities</td></tr>
+                <tr><td><code>A8</code></td><td>Continuous</td><td>Credit history length</td></tr>
+                <tr><td><code>A9</code></td><td>Binary (t, f)</td><td>Prior default / credit bureau record</td></tr>
+                <tr><td><code>A10</code></td><td>Binary (t, f)</td><td>Employment status proxy</td></tr>
+                <tr><td><code>A15</code></td><td>Continuous</td><td>Applicant income proxy</td></tr>
+                <tr><td><code>A16</code></td><td>Target (+ / -)</td><td>Credit approval decision (307 approved, 383 rejected)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="chart-container">
+          <img src="eda_01_target_distribution.png" alt="Target Class Distribution">
+          <div class="chart-caption">Figure 1: Balanced class distribution across the 690 applicants (44.5% approved vs 55.5% rejected).</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 2rem;">
+        <div class="chart-container">
+          <img src="eda_04_approval_by_a9.png" alt="Approval by Prior Default Proxy">
+          <div class="chart-caption">Figure 2: Approval rate stratified by A9 (prior default proxy). Applicants with prior default (f) face overwhelming rejection rates (>90%).</div>
+        </div>
+        <div class="chart-container">
+          <img src="eda_03_correlation_heatmap.png" alt="Correlation Heatmap">
+          <div class="chart-caption">Figure 3: Pearson correlation matrix of continuous features. Notice moderate correlation between A3 and A8, while no multi-collinearity exceeds 0.90.</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 2rem;">
+        <div class="chart-container">
+          <img src="eda_02_continuous_boxplots.png" alt="Continuous Features Boxplots">
+          <div class="chart-caption">Figure 4: Continuous attribute distributions by approval outcome, showing substantial right-skewness and heavy tails in income (A15) and credit history (A8).</div>
+        </div>
+        <div class="chart-container">
+          <img src="eda_06_income_distribution.png" alt="Income Distribution Log Scale">
+          <div class="chart-caption">Figure 5: Log-transformed income proxy (A15 + 1) distribution by outcome, demonstrating stark separation in high-income tiers.</div>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <h4>Key Takeaways from DA1</h4>
+        <p>1. <strong>Class Balance:</strong> With 44.5% positive labels, the target is well-balanced, eliminating the need for synthetic oversampling (SMOTE).<br>
+        2. <strong>Missing Values:</strong> Preprocessing utilized median imputation for continuous attributes (<code>A2</code>, <code>A14</code>) and mode imputation for categorical attributes (<code>A1</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>A7</code>), avoiding data leakage by computing statistics strictly on the training partition in DA2.<br>
+        3. <strong>Dominant Signal:</strong> Attribute <code>A9</code> exhibits massive predictive power, serving as an operational proxy for clean credit bureau records.</p>
+      </div>
+    </section>
+
+    <!-- Section: DA2 Relational Database & Feature Engineering -->
+    <section id="da2-db">
+      <div class="section-header">
+        <span class="section-tag">Assignment 2 (DA2) • Part 1 & 2</span>
+        <h2>Relational Database Engineering & Feature Selection</h2>
+        <p>Enterprise data modeling in SQLite and Random Forest permutation importance feature selection.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Database Architecture</h3>
+          <p>To adhere to relational database normal form and emulate financial production infrastructure, the dataset was normalized into two relational tables in SQLite (<code>credit.db</code>):</p>
+          <ul style="margin: 0.75rem 0 0.75rem 1.5rem; color: #334155;">
+            <li><code>applicants</code>: <code>id</code> (PK), <code>a1</code>-<code>a15</code> applicant attributes.</li>
+            <li><code>decisions</code>: <code>id</code> (FK referencing <code>applicants(id)</code>), <code>outcome</code>.</li>
+          </ul>
+          <p>Analytical SQL queries were executed via DBI, calculating group approval percentages, missingness tallies, and parameterized customer queries.</p>
+
+          <h3 style="margin-top: 1.5rem;">Feature Engineering Pipeline</h3>
+          <p>To capture non-linear banking relationships, the raw table was retrieved via SQL and transformed:</p>
+          <ul style="margin: 0.75rem 0 0.75rem 1.5rem; color: #334155;">
+            <li><strong>Log Transforms:</strong> <code>log1p(A3)</code>, <code>log1p(A8)</code>, <code>log1p(A11)</code>, <code>log1p(A14)</code>, <code>log1p(A15)</code> to compress long-tailed monetary values.</li>
+            <li><strong>Zero-Indicators:</strong> <code>A11_pos</code> and <code>A15_pos</code> flags to separate zero-inquiry/zero-income applicants.</li>
+            <li><strong>Interaction Ratios:</strong> <code>A8_per_A2</code> (credit history length normalized by applicant age).</li>
+            <li><strong>Interaction Flags:</strong> <code>A9_and_A10</code> (both credit history and employment flags positive).</li>
+            <li><strong>Audit Groups:</strong> <code>A2_group</code> (training quartile binning Q1-Q4 for fairness auditing).</li>
+          </ul>
+        </div>
+        <div>
+          <div class="chart-container">
+            <img src="da2_feature_importance.png" alt="Feature Importance Plot">
+            <div class="chart-caption">Figure 6: Random Forest permutation feature importance (500 trees). Prior default proxy A9 and the interaction A9_and_A10 dominate the decision hierarchy.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <h4>Feature Selection Decision Protocol</h4>
+        <p>1. <strong>Near-Zero Variance:</strong> <code>nearZeroVar</code> identified no zero-variance predictors.<br>
+        2. <strong>Correlation Pruning:</strong> <code>findCorrelation(cutoff = 0.90)</code> evaluated collinearity.<br>
+        3. <strong>Permutation Importance:</strong> Features with positive permutation importance were retained. Notably, demographic attribute <code>A1</code> ranked 20th with negligible importance (0.000044), while <code>A12</code> exhibited negative importance (-0.000407) and was discarded.</p>
+      </div>
+    </section>
+
+    <!-- Section: DA2 Model Benchmarking -->
+    <section id="da2-models">
+      <div class="section-header">
+        <span class="section-tag">Assignment 2 (DA2) • Part 3</span>
+        <h2>12-Model Machine Learning Benchmarking</h2>
+        <p>Systematic comparison of classification architectures using repeated 5-fold cross-validation.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <p>All models were trained using <strong>identical cross-validation folds</strong> (5-fold cross-validation repeated 2 times) to ensure an equitable benchmark. Centering, scaling, and zero-variance preprocessing were applied inside each fold to avoid data leakage.</p>
+          
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Algorithm</th>
+                  <th>Test Accuracy</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1 Score</th>
+                  <th>Test AUC</th>
+                  <th>CV AUC</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="font-weight: 700; background: #f0fdf4;">
+                  <td>Random Forest <span class="badge badge-success">Top Model</span></td>
+                  <td>0.839</td>
+                  <td>0.810</td>
+                  <td>0.836</td>
+                  <td>0.823</td>
+                  <td>0.918</td>
+                  <td>0.939</td>
+                </tr>
+                <tr>
+                  <td>Elastic Net Logistic</td>
+                  <td>0.825</td>
+                  <td>0.803</td>
+                  <td>0.803</td>
+                  <td>0.803</td>
+                  <td>0.914</td>
+                  <td>0.938</td>
+                </tr>
+                <tr>
+                  <td>Linear Discriminant Analysis (LDA)</td>
+                  <td>0.832</td>
+                  <td>0.771</td>
+                  <td>0.885</td>
+                  <td>0.824</td>
+                  <td>0.914</td>
+                  <td>0.932</td>
+                </tr>
+                <tr>
+                  <td>Bagged Trees</td>
+                  <td>0.861</td>
+                  <td>0.828</td>
+                  <td>0.869</td>
+                  <td>0.848</td>
+                  <td>0.914</td>
+                  <td>0.922</td>
+                </tr>
+                <tr>
+                  <td>Logistic Regression</td>
+                  <td>0.832</td>
+                  <td>0.771</td>
+                  <td>0.885</td>
+                  <td>0.824</td>
+                  <td>0.913</td>
+                  <td>0.912</td>
+                </tr>
+                <tr>
+                  <td>Gradient Boosting (GBM)</td>
+                  <td>0.825</td>
+                  <td>0.794</td>
+                  <td>0.820</td>
+                  <td>0.806</td>
+                  <td>0.912</td>
+                  <td>0.949</td>
+                </tr>
+                <tr>
+                  <td>Neural Network (MLP)</td>
+                  <td>0.839</td>
+                  <td>0.791</td>
+                  <td>0.869</td>
+                  <td>0.828</td>
+                  <td>0.911</td>
+                  <td>0.924</td>
+                </tr>
+                <tr>
+                  <td>Support Vector Machine (Radial)</td>
+                  <td>0.832</td>
+                  <td>0.806</td>
+                  <td>0.820</td>
+                  <td>0.813</td>
+                  <td>0.908</td>
+                  <td>0.929</td>
+                </tr>
+                <tr>
+                  <td>Support Vector Machine (Linear)</td>
+                  <td>0.825</td>
+                  <td>0.768</td>
+                  <td>0.869</td>
+                  <td>0.815</td>
+                  <td>0.906</td>
+                  <td>0.928</td>
+                </tr>
+                <tr>
+                  <td>Decision Tree (CART)</td>
+                  <td>0.825</td>
+                  <td>0.776</td>
+                  <td>0.852</td>
+                  <td>0.812</td>
+                  <td>0.880</td>
+                  <td>0.907</td>
+                </tr>
+                <tr>
+                  <td>Naive Bayes</td>
+                  <td>0.781</td>
+                  <td>0.772</td>
+                  <td>0.721</td>
+                  <td>0.746</td>
+                  <td>0.840</td>
+                  <td>0.880</td>
+                </tr>
+                <tr>
+                  <td>K-Nearest Neighbors (KNN)</td>
+                  <td>0.781</td>
+                  <td>0.792</td>
+                  <td>0.689</td>
+                  <td>0.737</td>
+                  <td>0.826</td>
+                  <td>0.903</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="chart-container">
+            <img src="da2_model_comparison.png" alt="Model Comparison Metrics">
+            <div class="chart-caption">Figure 7: Performance metrics across all 12 evaluated models on the held-out test set (138 applicants). Random Forest, Bagged Trees, Elastic Net, and Logistic Regression form the leading cluster.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: DA3 Algorithmic Fairness Audit -->
+    <section id="da3-fairness">
+      <div class="section-header">
+        <span class="section-tag">Assignment 3 (DA3) • Part 1</span>
+        <h2>Algorithmic Fairness Audit & Uncertainty Quantification</h2>
+        <p>Evaluating demographic parity and equal opportunity across applicant groups with non-parametric bootstrap intervals.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Fairness Metrics Formalization</h3>
+          <p>A rigorous audit cannot rely on a single fairness criterion. Four complementary mathematical fairness measures were evaluated across <code>A1</code> (binary demographic proxy) and <code>A2_group</code> (age quartiles Q1–Q4):</p>
+          <ul style="margin: 0.75rem 0 1rem 1.5rem; color: #334155;">
+            <li><strong>Demographic Parity Gap (DP):</strong> Max difference in approval rates between groups: $|P(\hat{Y}=1|G=g_1) - P(\hat{Y}=1|G=g_2)|$.</li>
+            <li><strong>Equal Opportunity Gap (EO):</strong> Max difference in True Positive Rates (TPR) among qualified applicants: $|TPR_{g_1} - TPR_{g_2}|$.</li>
+            <li><strong>Equalized Odds Gap:</strong> The maximum of the TPR gap and False Positive Rate (FPR) gap.</li>
+            <li><strong>Disparate Impact Ratio (DI):</strong> $\min(Rate) / \max(Rate)$ (evaluating compliance with the legal 80% four-fifths rule).</li>
+          </ul>
+
+          <h3>Uncertainty Quantification Protocol</h3>
+          <p>Because test cohorts in credit datasets are inherently finite ($N=138$), raw gap metrics can be deceptively noisy. Two inferential testing procedures were deployed:</p>
+          <ul style="margin: 0.75rem 0 1rem 1.5rem; color: #334155;">
+            <li><strong>1,000 Bootstrap Resamples:</strong> Constructs non-parametric 95% confidence intervals for every gap and AUC.</li>
+            <li><strong>2,000 Permutation Label Shuffles:</strong> Establishes the null distribution of gaps that arise purely from chance under equal true probabilities.</li>
+            <li><strong>Holm-Bonferroni Correction:</strong> Controls family-wise error rates across the multi-hypothesis test battery.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="chart-container">
+            <img src="da3_fairness_gaps.png" alt="Fairness Gaps by Model">
+            <div class="chart-caption">Figure 8: Observed Demographic Parity and Equal Opportunity gaps with 95% bootstrap confidence intervals across A1 and A2_group.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 2rem;">
+        <div>
+          <div class="chart-container">
+            <img src="da3_tradeoff.png" alt="Accuracy vs Fairness Trade-off">
+            <div class="chart-caption">Figure 9: Test Accuracy vs Equal Opportunity Gap. Models in the upper-left quadrant deliver optimal balance between underwriting accuracy and fairness.</div>
+          </div>
+        </div>
+        <div>
+          <h3>Statistical Dominance: Paired Hypothesis Testing</h3>
+          <p>Does the top-ranked Random Forest model statistically outperform regularized logistic regression? Two paired tests were performed on the exact same 138 test applicants:</p>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Pair</th>
+                  <th>AUC Diff</th>
+                  <th>DeLong p (adj)</th>
+                  <th>McNemar p (adj)</th>
+                  <th>Verdict</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>RF vs Logistic Regression</td>
+                  <td>+0.005</td>
+                  <td>1.000</td>
+                  <td>1.000</td>
+                  <td><span class="badge badge-primary">Statistically Tied</span></td>
+                </tr>
+                <tr>
+                  <td>RF vs Elastic Net</td>
+                  <td>+0.003</td>
+                  <td>1.000</td>
+                  <td>1.000</td>
+                  <td><span class="badge badge-primary">Statistically Tied</span></td>
+                </tr>
+                <tr>
+                  <td>RF vs LDA</td>
+                  <td>+0.004</td>
+                  <td>1.000</td>
+                  <td>1.000</td>
+                  <td><span class="badge badge-primary">Statistically Tied</span></td>
+                </tr>
+                <tr>
+                  <td>RF vs Bagged Trees</td>
+                  <td>+0.004</td>
+                  <td>1.000</td>
+                  <td>1.000</td>
+                  <td><span class="badge badge-primary">Statistically Tied</span></td>
+                </tr>
+                <tr>
+                  <td>RF vs Naive Bayes</td>
+                  <td>+0.077</td>
+                  <td>0.043*</td>
+                  <td>0.963</td>
+                  <td><span class="badge badge-danger">RF Significantly Better</span></td>
+                </tr>
+                <tr>
+                  <td>RF vs KNN</td>
+                  <td>+0.092</td>
+                  <td>0.005**</td>
+                  <td>0.631</td>
+                  <td><span class="badge badge-danger">RF Significantly Better</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;"><strong>Crucial Insight:</strong> Because the DeLong and McNemar adjusted p-values exceed 0.05 across all top 8 models, an institution can deploy fully interpretable <strong>Elastic Net Logistic Regression</strong> without any statistically significant sacrifice in predictive power.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: DA3 Mitigation via Unawareness -->
+    <section id="da3-unawareness">
+      <div class="section-header">
+        <span class="section-tag">Assignment 3 (DA3) • Part 2</span>
+        <h2>Fairness Through Unawareness Mitigation Experiment</h2>
+        <p>Testing whether omitting the protected attribute eliminates disparities or merely blinds the auditor.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Experimental Setup & Results</h3>
+          <p>A frequent heuristic in lending is "fairness through unawareness" — simply removing sensitive demographic features (like gender or race proxy <code>A1</code>) from the training set. Three representative architectures were retrained with and without <code>A1</code> on identical cross-validation folds:</p>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Architecture</th>
+                  <th>A1 Status</th>
+                  <th>Test Accuracy</th>
+                  <th>Equal Opp Gap (A1)</th>
+                  <th>Decision Flips (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td rowspan="2">Logistic Regression</td>
+                  <td>With A1</td><td>83.2%</td><td>0.045</td><td rowspan="2"><strong>0.7%</strong> (1 flip)</td>
+                </tr>
+                <tr>
+                  <td>Without A1</td><td>83.2%</td><td>0.001</td>
+                </tr>
+                <tr>
+                  <td rowspan="2">Elastic Net Logistic</td>
+                  <td>With A1</td><td>82.5%</td><td>0.037</td><td rowspan="2"><strong>0.0%</strong> (0 flips)</td>
+                </tr>
+                <tr>
+                  <td>Without A1</td><td>82.5%</td><td>0.037</td>
+                </tr>
+                <tr>
+                  <td rowspan="2">Random Forest</td>
+                  <td>With A1</td><td>83.9%</td><td>0.193</td><td rowspan="2"><strong>1.5%</strong> (2 flips)</td>
+                </tr>
+                <tr>
+                  <td>Without A1</td><td>83.2%</td><td>0.124</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="margin-top: 1rem;"><strong>Conclusion:</strong> Removing <code>A1</code> changed at most 1.5% of decisions (only 2 out of 138 applicants) and had negligible effect on Elastic Net. The remaining features (prior default, debt, income) strongly proxy the demographic attributes, demonstrating that superficial unawareness does not eliminate structural bias.</p>
+        </div>
+        <div>
+          <div class="chart-container">
+            <img src="da3_unawareness.png" alt="Fairness Gaps with and without A1">
+            <div class="chart-caption">Figure 10: Comparison of Demographic Parity and Equal Opportunity gaps with and without A1 across audited cohorts. Disparities persist due to proxy feature encoding.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Interactive Shiny Dashboard Architecture -->
+    <section id="dashboard">
+      <div class="section-header">
+        <span class="section-tag">Assignment 3 (DA3) • Part 3</span>
+        <h2>Interactive Shiny Decision Cockpit (app.R)</h2>
+        <p>A web-based interactive auditing tool built with R Shiny and Plotly for real-time model governance.</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Five Modular Dashboard Capabilities</h3>
+          <ul style="margin: 0.75rem 0 1rem 1.5rem; color: #334155;">
+            <li><strong>1. Model Overview:</strong> Dynamic Plotly forest plot displaying test AUCs with asymmetric 95% bootstrap confidence intervals for all 12 classifiers.</li>
+            <li><strong>2. Fairness by Model:</strong> Interactive group approval rate bar charts, disparity tiles, and empirical chance thresholds.</li>
+            <li><strong>3. Accuracy vs. Fairness Frontier:</strong> Scatter plot charting trade-offs between model accuracy/AUC and demographic parity/equal opportunity gaps.</li>
+            <li><strong>4. Hypothesis Testing Matrix:</strong> Real-time DeLong and McNemar paired test p-values adjusting for multi-comparison family-wise error.</li>
+            <li><strong>5. Baseline Rates & Auditing Caveats:</strong> Ground-truth demographic breakdown highlighting that real base approval rates differ (51.1% for A1:a vs 41.3% for A1:b).</li>
+          </ul>
+          <div class="card" style="background:#f8fafc; border: 1px solid #cbd5e1; margin-top: 1.5rem;">
+            <h4>Running the Dashboard Locally</h4>
+            <pre style="background:#1e293b; color:#f8fafc; padding:0.85rem; border-radius:8px; font-size:0.85rem; overflow-x:auto;">
+# Launch directly from R console:
+shiny::runApp()
+
+# Or from project dashboard directory:
+shiny::runApp("da3_dashboard")</pre>
+          </div>
+        </div>
+        <div class="card" style="background:#f1f5f9; padding: 2rem;">
+          <h3 style="color:var(--primary); margin-bottom:1rem;">Regulatory & Ethical Governance Summary</h3>
+          <p style="font-size:0.95rem; margin-bottom:1rem;"><strong>1. Base Rate Disparity:</strong> Qualified approval rates differ naturally across groups in historical data. Therefore, <em>Equal Opportunity</em> (equal TPR among deserving applicants) is mathematically preferable to enforced <em>Demographic Parity</em>.</p>
+          <p style="font-size:0.95rem; margin-bottom:1rem;"><strong>2. The Rashomon Effect:</strong> Because 8 distinct model families achieve near-identical predictive utility (AUC ~0.91), credit institutions have the regulatory freedom to choose the model with the best interpretability and smallest fairness gap.</p>
+          <p style="font-size:0.95rem;"><strong>3. The Fallacy of Unawareness:</strong> Excluding protected columns gives false regulatory assurance while proxy variables continue to perpetuate historical disparities.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Credit Approval Prediction & Algorithmic Fairness Audit • Academic Research Project</p>
+    <p style="margin-top:0.5rem; font-size:0.85rem;">Prepared by <strong>Ayush Khatai</strong> (24BDS1106) • BMAT202P Probability and Statistics • Supervised by Prof. Jaganathan B</p>
+    <p style="margin-top:0.75rem;"><a href="https://github.com/AyushKhatai/credit-approval-audit" target="_blank">View GitHub Repository: AyushKhatai/credit-approval-audit</a></p>
+  </footer>
+
+</body>
+</html>

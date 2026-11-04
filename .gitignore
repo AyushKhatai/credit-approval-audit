@@ -3,3 +3,5 @@
 .Rproj.user/
 files.zip
 files/
+.venv/
+~$*.pptx
